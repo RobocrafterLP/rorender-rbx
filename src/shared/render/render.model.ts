@@ -15,6 +15,10 @@ export interface RenderConstants {
     imageDimensions: Vector2
     startingPosition: CFrame
     materialMap: Map<Enum.Material, number>
+    sharedCaches: {
+        roadCache: Map<Instance, number>
+        buildingCache: Map<Instance, number>
+    }
 }
 
 export enum ActorHelperRequest {

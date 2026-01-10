@@ -130,12 +130,17 @@ export function computePixel(
     }
 
     // Determine groupings
-    const buildingGrouping = findGrouping(
+    const buildingGrouping = getGrouping(
         settings.buildingGroups,
         primary,
-        true
+        renderConstants.sharedCaches.buildingCache
     )
-    const roadGrouping = findGrouping(settings.roadGroups, primary, false)
+
+    const roadGrouping = getGrouping(
+        settings.roadGroups,
+        primary,
+        renderConstants.sharedCaches.roadCache
+    )
 
     // Validate material map
     if (!renderConstants.materialMap.get(primary.Material)) {
@@ -182,11 +187,23 @@ function checkIfRayIsWater(result: RaycastResult, settings: Settings): boolean {
     return false
 }
 
-// Helper function to find groupings (buildings, roads, etc.)
-function findGrouping(
+function getGrouping(
     groups: StructureGrouping[],
     primary: RaycastResult,
-    allowNonTerrain: boolean
+    cache: Map<Instance, number>
+): number {
+    const cacheHit = cache.get(primary.Instance)
+    const groupingId = cacheHit || searchForGrouping(groups, primary)
+    if (!cacheHit) {
+        cache.set(primary.Instance, groupingId)
+    }
+    return groupingId
+}
+
+// Helper function to find groupings (buildings, roads, etc.)
+function searchForGrouping(
+    groups: StructureGrouping[],
+    primary: RaycastResult
 ): number {
     for (let i = 0; i < groups.size(); i++) {
         const group = groups[i]
@@ -194,7 +211,11 @@ function findGrouping(
         // Check instance hierarchy
         if (group.instances) {
             for (const item of group.instances) {
-                if (primary.Instance.IsDescendantOf(item)) return i + 1
+                if (
+                    item === primary.Instance ||
+                    primary.Instance.IsDescendantOf(item)
+                )
+                    return i + 1
             }
         }
 
@@ -205,7 +226,7 @@ function findGrouping(
                 ? primary.Instance.ClassName === "Terrain"
                 : true
 
-            if (isMaterialMatch && (allowNonTerrain || isTerrainMatch)) {
+            if (isMaterialMatch && (!group.onlyTerrain || isTerrainMatch)) {
                 return i + 1
             }
         }
