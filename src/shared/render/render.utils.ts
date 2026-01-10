@@ -194,7 +194,11 @@ function findGrouping(
         // Check instance hierarchy
         if (group.instances) {
             for (const item of group.instances) {
-                if (primary.Instance.IsDescendantOf(item)) return i + 1
+                if (
+                    item === primary.Instance ||
+                    primary.Instance.IsDescendantOf(item)
+                )
+                    return i + 1
             }
         }
 
