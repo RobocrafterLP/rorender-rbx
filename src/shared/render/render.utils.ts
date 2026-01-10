@@ -130,12 +130,29 @@ export function computePixel(
     }
 
     // Determine groupings
-    const buildingGrouping = findGrouping(
-        settings.buildingGroups,
-        primary,
-        true
+    let buildingCacheHit = renderConstants.sharedCaches.buildingCache.get(
+        primary.Instance
     )
-    const roadGrouping = findGrouping(settings.roadGroups, primary, false)
+    const buildingGrouping =
+        buildingCacheHit || findGrouping(settings.buildingGroups, primary, true)
+    if (!buildingCacheHit) {
+        renderConstants.sharedCaches.buildingCache.set(
+            primary.Instance,
+            buildingGrouping
+        )
+    }
+
+    let roadCacheHit = renderConstants.sharedCaches.roadCache.get(
+        primary.Instance
+    )
+    const roadGrouping =
+        roadCacheHit || findGrouping(settings.roadGroups, primary, false)
+    if (!roadCacheHit) {
+        renderConstants.sharedCaches.roadCache.set(
+            primary.Instance,
+            roadGrouping
+        )
+    }
 
     // Validate material map
     if (!renderConstants.materialMap.get(primary.Material)) {
