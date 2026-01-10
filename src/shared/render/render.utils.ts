@@ -130,29 +130,17 @@ export function computePixel(
     }
 
     // Determine groupings
-    let buildingCacheHit = renderConstants.sharedCaches.buildingCache.get(
-        primary.Instance
+    const buildingGrouping = getGrouping(
+        settings.buildingGroups,
+        primary,
+        renderConstants.sharedCaches.buildingCache
     )
-    const buildingGrouping =
-        buildingCacheHit || findGrouping(settings.buildingGroups, primary, true)
-    if (!buildingCacheHit) {
-        renderConstants.sharedCaches.buildingCache.set(
-            primary.Instance,
-            buildingGrouping
-        )
-    }
 
-    let roadCacheHit = renderConstants.sharedCaches.roadCache.get(
-        primary.Instance
+    const roadGrouping = getGrouping(
+        settings.roadGroups,
+        primary,
+        renderConstants.sharedCaches.roadCache
     )
-    const roadGrouping =
-        roadCacheHit || findGrouping(settings.roadGroups, primary, false)
-    if (!roadCacheHit) {
-        renderConstants.sharedCaches.roadCache.set(
-            primary.Instance,
-            roadGrouping
-        )
-    }
 
     // Validate material map
     if (!renderConstants.materialMap.get(primary.Material)) {
@@ -199,11 +187,23 @@ function checkIfRayIsWater(result: RaycastResult, settings: Settings): boolean {
     return false
 }
 
-// Helper function to find groupings (buildings, roads, etc.)
-function findGrouping(
+function getGrouping(
     groups: StructureGrouping[],
     primary: RaycastResult,
-    allowNonTerrain: boolean
+    cache: Map<Instance, number>
+): number {
+    const cacheHit = cache.get(primary.Instance)
+    const groupingId = cacheHit || searchForGrouping(groups, primary)
+    if (!cacheHit) {
+        cache.set(primary.Instance, groupingId)
+    }
+    return groupingId
+}
+
+// Helper function to find groupings (buildings, roads, etc.)
+function searchForGrouping(
+    groups: StructureGrouping[],
+    primary: RaycastResult
 ): number {
     for (let i = 0; i < groups.size(); i++) {
         const group = groups[i]
@@ -226,7 +226,7 @@ function findGrouping(
                 ? primary.Instance.ClassName === "Terrain"
                 : true
 
-            if (isMaterialMatch && (allowNonTerrain || isTerrainMatch)) {
+            if (isMaterialMatch && (!group.onlyTerrain || isTerrainMatch)) {
                 return i + 1
             }
         }
