@@ -9,6 +9,7 @@ import {
 import { color3ToVector3 } from "shared/utils"
 import { getEditableImage, getEditableMesh } from "./editable-cache"
 import { render } from "./render.main"
+import { getImageDimensions } from "../utils"
 
 const LIGHTING = game.GetService("Lighting")
 const TERRAIN = game.Workspace.Terrain
@@ -193,10 +194,11 @@ function getGrouping(
     cache: Map<Instance, number>
 ): number {
     const cacheHit = cache.get(primary.Instance)
-    const groupingId = cacheHit || searchForGrouping(groups, primary)
-    if (!cacheHit) {
-        cache.set(primary.Instance, groupingId)
+    if (cacheHit !== undefined) {
+        return cacheHit
     }
+    const groupingId = searchForGrouping(groups, primary)
+    cache.set(primary.Instance, groupingId)
     return groupingId
 }
 
