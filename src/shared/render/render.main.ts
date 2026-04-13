@@ -260,6 +260,10 @@ function getRenderConstants(
         rayLength,
         imageDimensions,
         rayVector: settings.mapCFrame.UpVector.mul(-1).mul(rayLength),
-        materialMap
+        materialMap,
+        sharedCaches: {
+            roadCache: new Map<Instance, number>(),
+            buildingCache: new Map<Instance, number>()
+        }
     }
 }
